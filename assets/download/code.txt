@@ -1,0 +1,69 @@
+//#include <Blynk.h>
+// #define BLYNK_PRINT Serial
+#include <DHT.h>
+#include <DHT_U.h>
+#define DHTPIN D1
+#define DHTTYPE DHT11
+// #include <ESP8266WiFi.h>
+#include <BlynkSimpleEsp8266.h>
+char auth[] = "zaBySlDfcD5G2pUgoNBCPORouDvR7z3G";
+char ssid[] = "@Interface323";
+char pass[] = "11223344";
+DHT_Unified dht(DHTPIN, DHTTYPE);
+int ledPin = D0;
+int analogPin = A0; //ประกาศตัวแปร ให้ analogPin 
+int val = 0;
+float Temperature;
+float Humidity;
+
+
+void setup()
+{
+  // Debug console
+pinMode(ledPin, OUTPUT);  // sets the pin as output
+  Serial.begin(9600);
+  sensor_t sensor;
+  dht.temperature().getSensor(&sensor);
+  dht.humidity().getSensor(&sensor);
+  
+  dht.begin();
+  Blynk.begin(auth, ssid, pass, "elec.cmtc.ac.th", 8080);
+}
+
+
+
+void loop()
+{
+  Blynk.run();
+  sensors_event_t event;
+  dht.temperature().getEvent(&event);
+  if (!isnan(event.temperature)) {
+    Temperature = event.temperature;
+    Serial.print("Temperature: ");
+    Serial.print(Temperature);
+    Serial.println(" °C");
+    Blynk.virtualWrite(V0, Temperature);
+  }
+
+  dht.humidity().getEvent(&event);
+  if (!isnan(event.relative_humidity)) {
+    Humidity = event.relative_humidity;
+    Serial.print("Humidity: ");
+    Serial.print(Humidity);
+    Serial.println(" %");
+    Blynk.virtualWrite(V1, Humidity);
+  }
+
+  val = analogRead(analogPin);
+  Serial.print("val = ");
+  Serial.println(val);
+  Blynk.virtualWrite(V2, val);  // ส่งค่า val ไปยังแพลตฟอร์ม Blynk
+
+  if (val > 490) {
+    digitalWrite(ledPin, HIGH);
+  }
+  else {
+    digitalWrite(ledPin, LOW);
+  }
+  delay(1000);
+}
